@@ -31,16 +31,10 @@ public abstract class SiteMapEntry {
     public static class Page extends SiteMapEntry {
         private Set<SiteMapEntry> children;
 
-        public Page(String uri, Set<SiteMapEntry> children) {
+        private Page(String uri, Set<SiteMapEntry> children) {
             super(uri);
             this.children = Collections.unmodifiableSet(children);
         }
-
-        public Page(String uri) {
-            super(uri);
-            this.children = Collections.emptySet();
-        }
-
 
         public Set<SiteMapEntry> getChildren() {
             return children;
@@ -52,10 +46,21 @@ public abstract class SiteMapEntry {
      * A static resource: Image
      */
     public static class Image extends SiteMapEntry {
-        public Image(String uri) {
+        private Image(String uri) {
             super(uri);
         }
     }
 
 
+    public static Page page(String uri, Set<SiteMapEntry> children) {
+        return new Page(uri, children);
+    }
+
+    public static Page page(String uri) {
+        return new Page(uri, Collections.emptySet());
+    }
+
+    public static Image image(String uri) {
+        return new Image(uri);
+    }
 }

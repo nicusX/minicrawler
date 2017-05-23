@@ -14,11 +14,12 @@ import static org.hamcrest.Matchers.*;
 public class PageScraperTest {
 
     private static final String PAGE = "https://en.wikipedia.org/wiki/Main_Page";
+    private static final String BASE_URI = "https://en.wikipedia.org/";
     private static final String BASE_HOST = "en.wikipedia.org";
 
     @Test
-    public void findInternalLinks()  {
-        PageScraper scraper = PageScraper.fetchPage(PAGE, BASE_HOST);
+    public void findInternalLinks() {
+        PageScraper scraper = PageScraper.fetchPage(PAGE, BASE_URI);
 
         Set<String> links = scraper.allInternalLinks();
 
@@ -28,7 +29,7 @@ public class PageScraperTest {
 
     @Test
     public void findExternalLinks() {
-        PageScraper scraper = PageScraper.fetchPage(PAGE, BASE_HOST);
+        PageScraper scraper = PageScraper.fetchPage(PAGE, BASE_URI);
 
         Set<String> links = scraper.allExternalLinks();
 
@@ -39,7 +40,7 @@ public class PageScraperTest {
 
     @Test
     public void findImages() {
-        PageScraper scraper = PageScraper.fetchPage(PAGE, BASE_HOST);
+        PageScraper scraper = PageScraper.fetchPage(PAGE, BASE_URI);
 
         Set<String> images = scraper.allImages();
 
@@ -50,9 +51,9 @@ public class PageScraperTest {
     public void invalidPage() {
         PageScraper scraper = PageScraper.fetchPage("http://foo", "foo");
 
-        assertThat( scraper.allImages(), empty());
-        assertThat( scraper.allExternalLinks(), empty());
-        assertThat( scraper.allInternalLinks(), empty());
+        assertThat(scraper.allImages(), empty());
+        assertThat(scraper.allExternalLinks(), empty());
+        assertThat(scraper.allInternalLinks(), empty());
     }
 
     private Matcher<String> hostEndsWith(String baseHost) {
@@ -68,9 +69,5 @@ public class PageScraperTest {
                 description.appendText("URI host should end with ").appendValue(baseHost);
             }
         };
-    }
-
-    private static boolean hostEndWith(String uri, String baseHost) {
-        return URI.create(uri).getHost().endsWith(baseHost);
     }
 }

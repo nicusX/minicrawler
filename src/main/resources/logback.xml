@@ -9,11 +9,7 @@
         </layout>
     </appender>
 
-    <logger name="it.nicus" level="info" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-
-    <root level="error">
+    <root level="warn">
         <appender-ref ref="STDOUT" />
     </root>
 

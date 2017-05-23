@@ -2,6 +2,8 @@ package it.nicus.samples.minicrawler;
 
 import org.junit.Test;
 
+import java.util.Set;
+
 import static org.junit.Assert.*;
 import static org.hamcrest.Matchers.*;
 
@@ -13,9 +15,10 @@ public class CrawlerTest {
 
         SiteMapEntry siteMap = new Crawler(baseUri).crawl(0);
 
-        assertThat( siteMap, instanceOf( SiteMapEntry.Page.class ) );
+        assertThat(siteMap, instanceOf(SiteMapEntry.Page.class));
 
-        assertThat( ((SiteMapEntry.Page)siteMap).getChildren(), not(empty()));
+        Set<SiteMapEntry> children = ((SiteMapEntry.Page) siteMap).getChildren();
+        assertThat(children, not(empty()));
     }
 
     @Test
@@ -24,8 +27,14 @@ public class CrawlerTest {
 
         SiteMapEntry siteMap = new Crawler(baseUri).crawl(1);
 
-        assertThat( siteMap, instanceOf( SiteMapEntry.Page.class ) );
+        assertThat(siteMap, instanceOf(SiteMapEntry.Page.class));
 
-        assertThat( ((SiteMapEntry.Page)siteMap).getChildren(), not(empty()));
+        Set<SiteMapEntry> children = ((SiteMapEntry.Page) siteMap).getChildren();
+        assertThat(children, not(empty()));
+
+        // Some children should have children
+        assertTrue(children.stream()
+                .anyMatch(entry -> entry instanceof SiteMapEntry.Page
+                        && !((SiteMapEntry.Page) entry).getChildren().isEmpty()));
     }
 }

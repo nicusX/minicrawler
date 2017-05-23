@@ -25,10 +25,12 @@ public class PageScraper {
     }
 
 
-    public static PageScraper fetchPage(final String uri, final String baseHost)  {
+    public static PageScraper fetchPage(final String uri, final String baseUri) {
         LOGGER.info("Fetching: {}", uri);
         try {
-            return new PageScraper(Jsoup.connect(uri).get(), baseHost);
+            String baseHost = URI.create(baseUri).getHost();
+            Document doc = Jsoup.connect(uri).get();
+            return new PageScraper(doc, baseHost);
         } catch (IOException ioe) {
             LOGGER.warn("Unable to retrieve page: {}", uri);
             return new EmptyPageScraper();
@@ -43,25 +45,24 @@ public class PageScraper {
     private Stream<String> allLinksStream() {
         return doc.select("a[href]")
                 .stream()
-                .map( element -> element.attr("abs:href"))
-                .filter( href -> !href.isEmpty());
+                .map(element -> element.attr("abs:href"))
+                .filter(href -> !href.isEmpty());
     }
 
     public Set<String> allInternalLinks() {
         return allLinksStream()
-                .filter( uri -> isInternal(uri) ).collect(Collectors.toSet());
+                .filter(uri -> isInternalLink(uri)).collect(Collectors.toSet());
     }
 
     public Set<String> allExternalLinks() {
-        // TODO Not very efficient scrolling all links twice
         return allLinksStream()
-                .filter( uri -> !isInternal(uri) ).collect(Collectors.toSet());
+                .filter(uri -> !isInternalLink(uri)).collect(Collectors.toSet());
     }
 
-    private  boolean isInternal(final String uriStr) {
+    private boolean isInternalLink(final String uriStr) {
         try {
             URI uri = URI.create(uriStr);
-            return ( uri.getScheme().equals("http") ||  uri.getScheme().equals("https") )
+            return (uri.getScheme().equals("http") || uri.getScheme().equals("https"))
                     && uri.getHost().endsWith(baseHost);
         } catch (IllegalArgumentException iae) {
             LOGGER.warn("Invalid URI: {}", uriStr);
@@ -70,18 +71,17 @@ public class PageScraper {
     }
 
 
-
     private static Set<String> extractElementAttributes(final Document doc, final String cssQuery, final String attrName) {
         return doc.select(cssQuery)
                 .stream()
-                .map( element -> element.attr(attrName))
-                .filter( src -> !src.isEmpty())
+                .map(element -> element.attr(attrName))
+                .filter(src -> !src.isEmpty())
                 .collect(Collectors.toSet());
     }
 
     public static class EmptyPageScraper extends PageScraper {
         private EmptyPageScraper() {
-            super(null,null);
+            super(null, null);
         }
 
         @Override
