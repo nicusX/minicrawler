@@ -12,7 +12,7 @@ public class SiteMapPrinter {
     }
 
     private static void printPage(SiteMapEntry.Page page, int level) {
-        System.out.println(padding(level) + "Page: " + page.getUri());
+        System.out.println(padding(level) + "Link: " + page.getUri());
 
         page.getChildren().forEach(child -> printChild(child, level));
     }
