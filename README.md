@@ -2,19 +2,26 @@
 
 Minimalistic web site crawler.
 
-Starting from a specified URI, crawls the website recursively, down to a maximum number of levels.
+Starting from a specified URI, crawls the website recursively, down to a
+maximum number of levels.
 
-External links are listed, but not crawled in.
-External links are defined as links to domains that are neither the same domain
-nor a subdomain of the initial URI.
+The site maps identifies internal and external links and static resources
+(only images, at the moment).
 
-The crawler doesn't get captured in circular links path, as each web page is never crawled twice.
+The crawling is limited to internal links only.
+Internal links are defined as links to a domain that is either the same or
+a subdomain of the initial page.
+
+Each page is crawled at most once, so the crawler doesn't get captured in
+circular link paths.
+
+Recursive crawling is parallelised, to improve performance.
 
 At the end of the process, a simple map is printed to *stdout*.
 
 ## How to build and run
 
-Requires Java 8
+Requires Java 8. Gradle is embedded so not required.
 
 To build the project (Linux, OS X)
 ```
@@ -37,24 +44,17 @@ Example: crawl from wikipedia home page down to one level.
 
 ## Known simplifications and room for improvement
 
-The crawling process in single-threaded and not very fast.
-Some form of parallelisation may be introduced relatively easy,
-but care must be taken as a single mutable collection of visited page is
-shared across all scraping processes (must be synchronised).
-
-Only `<img>` tags are currently detected as static resources. No CSS, JS, nor images included in CSS.
-Mapping different types of static resources is an easy addition.
-
-Unit tests are poor as they hit the network: they are not real unit tests.
-A small refactoring would be required to externalise the http fetching process
-from `PageScraper` class, enabling proper testing based on static resources saved
-as project test data.
-
-Command line parameters are not validated. Particularly, the crawling nesting level should be
-limited to a reasonable maximum.
+Only `<img>` tags are currently detected as static resources.
+No CSS, JS, nor images included in CSS.
+Identifying other static resource types is not hard.
 
 The implementation is not memory efficient.
-HTML scraping uses https://jsoup.org/ that parses in memory the entire DOM of the page.
-This is not very efficient and memory consuming. Also, the current implementation doesn't drop
-the DOM document once used to extract all links and static resources.
+HTML scraping uses https://jsoup.org/ and parses the entire DOM of each page.
+Also, the current implementation retains in memory the DOM of each page.
+Some refactoring would allow to drop it as soon as all elements to be mapped
+are extracted.
 
+A single Integration Test, hitting the network, currently runs with unit tests.
+It should be run as a separate task (not a big issue, though, as it takes 2-3 sec).
+
+The site map printout is very minimalistic.
