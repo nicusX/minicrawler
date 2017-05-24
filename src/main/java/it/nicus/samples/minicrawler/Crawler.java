@@ -3,6 +3,7 @@ package it.nicus.samples.minicrawler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,7 +15,7 @@ public class Crawler {
     private static final Logger LOGGER = LoggerFactory.getLogger(Crawler.class);
 
     private final String baseUri;
-    private final Set<String> visited = new HashSet<>(); // This is mutated! No synchronisation problem as long as we are single-threaded
+    private final Set<String> visited = Collections.synchronizedSet(new HashSet<>()); // This is mutated! Synchronised to parallelise crawling
     private final DocumentProvider documentProvider;
 
     /**
@@ -66,7 +67,7 @@ public class Crawler {
         // Find all internal links
         final Set<String> internalLinks = scraper.allInternalLinks();
         LOGGER.info("Found {} internal links", internalLinks.size());
-        final Set<SiteMapEntry> internalLinkEntries = internalLinks.stream()
+        final Set<SiteMapEntry> internalLinkEntries = internalLinks.parallelStream() // crawling is parallelised
                 .map(link -> crawlDeeperUnvisitedLinks(link, maxDeeperLevels))
                 .collect(Collectors.toSet());
 
