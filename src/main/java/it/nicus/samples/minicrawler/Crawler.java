@@ -17,7 +17,6 @@ public class Crawler {
 
     public static void main(String[] args) {
         final String baseUrl = (args.length > 0) ? args[0] : "https://en.wikipedia.org/wiki/Main_Page";
-
         final int levels = (args.length > 1) ? (Integer.parseInt(args[1])) : 1;
 
         LOGGER.info("Crawling from {} down to {} levels", baseUrl, levels);
@@ -44,7 +43,7 @@ public class Crawler {
         LOGGER.info("Reading {}", uri);
 
         // Fetch and parse the URI
-        final PageScraper scraper = PageScraper.fetchPage(uri, baseUri);
+        final PageScraper scraper = PageScraper.fetchPage(uri, baseUri, new GetUriDocumentParser());
 
         // Find all images
         final Set<String> images = scraper.allImages();

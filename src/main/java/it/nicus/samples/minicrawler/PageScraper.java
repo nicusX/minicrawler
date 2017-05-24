@@ -1,14 +1,14 @@
 package it.nicus.samples.minicrawler;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,22 +25,27 @@ public class PageScraper {
     }
 
 
-    public static PageScraper fetchPage(final String uri, final String baseUri) {
+    public static PageScraper fetchPage(final String uri, final String baseUri, final Function<String, Optional<Document>> documentSupplier) {
         LOGGER.info("Fetching: {}", uri);
-        try {
-            String baseHost = URI.create(baseUri).getHost();
-            Document doc = Jsoup.connect(uri).get();
-            return new PageScraper(doc, baseHost);
-        } catch (IOException ioe) {
-            LOGGER.warn("Unable to retrieve page: {}", uri);
-            return new EmptyPageScraper();
-        }
+
+        String baseHost = URI.create(baseUri).getHost();
+
+        return documentSupplier.apply(uri)
+                .map( document -> new PageScraper(document, baseHost) )
+                .orElse( new EmptyPageScraper() );
+    }
+
+    private static Set<String> extractElementAttributes(final Document doc, final String cssQuery, final String attrName) {
+        return doc.select(cssQuery)
+                .stream()
+                .map(element -> element.attr(attrName))
+                .filter(src -> !src.isEmpty())
+                .collect(Collectors.toSet());
     }
 
     public Set<String> allImages() {
         return extractElementAttributes(doc, "img[src]", "abs:src");
     }
-
 
     private Stream<String> allLinksStream() {
         return doc.select("a[href]")
@@ -68,15 +73,6 @@ public class PageScraper {
             LOGGER.warn("Invalid URI: {}", uriStr);
             return false;
         }
-    }
-
-
-    private static Set<String> extractElementAttributes(final Document doc, final String cssQuery, final String attrName) {
-        return doc.select(cssQuery)
-                .stream()
-                .map(element -> element.attr(attrName))
-                .filter(src -> !src.isEmpty())
-                .collect(Collectors.toSet());
     }
 
     public static class EmptyPageScraper extends PageScraper {
