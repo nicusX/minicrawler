@@ -7,33 +7,35 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
+/**
+ * Recursively crawl local links, down to max level, and produce a site map.
+ */
 public class Crawler {
     private static final Logger LOGGER = LoggerFactory.getLogger(Crawler.class);
 
     private final String baseUri;
     private final Set<String> visited = new HashSet<>(); // This is mutated! No synchronisation problem as long as we are single-threaded
+    private final DocumentProvider documentProvider;
 
-
-    public static void main(String[] args) {
-        final String baseUrl = (args.length > 0) ? args[0] : "https://en.wikipedia.org/wiki/Main_Page";
-        final int levels = (args.length > 1) ? (Integer.parseInt(args[1])) : 1;
-
-        LOGGER.info("Crawling from {} down to {} levels", baseUrl, levels);
-
-        final Crawler crawler = new Crawler(baseUrl);
-        final SiteMapEntry.Page siteMap = crawler.crawl(levels);
-
-        LOGGER.info("Crawling complete");
-
-        SiteMapPrinter.printMap(siteMap);
-    }
-
-
-    public Crawler(final String baseUri) {
+    /**
+     * <p>Create the crawler from a starting URI.</p>
+     * <p>It will use the DocumentProvider to actually fetch and parse the pages.</p>
+     * <p>Does not start the crawling process</p>
+     *
+     * @param baseUri          starting URI
+     * @param documentProvider DocumentProvider to provide the JSoup Document for the specified URI
+     */
+    public Crawler(final String baseUri, final DocumentProvider documentProvider) {
         this.baseUri = baseUri;
+        this.documentProvider = documentProvider;
     }
 
+    /**
+     * Starts the crawling process, down to a maximum level of nested pages.
+     *
+     * @param maxLevels maximum level of nested local pages to crawl in.
+     * @return the resulting site map.
+     */
     public SiteMapEntry.Page crawl(final int maxLevels) {
         return crawlIn(baseUri, maxLevels);
     }
@@ -43,7 +45,7 @@ public class Crawler {
         LOGGER.info("Reading {}", uri);
 
         // Fetch and parse the URI
-        final PageScraper scraper = PageScraper.fetchPage(uri, baseUri, new GetUriDocumentParser());
+        final PageScraper scraper = PageScraper.scrape(uri, baseUri, documentProvider);
 
         // Find all images
         final Set<String> images = scraper.allImages();

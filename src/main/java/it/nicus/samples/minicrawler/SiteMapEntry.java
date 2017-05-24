@@ -1,12 +1,10 @@
 package it.nicus.samples.minicrawler;
 
-import java.net.URI;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
- * An entry of the site map
+ * An entry of the site map tree.
  */
 public abstract class SiteMapEntry {
     private final String uri;
@@ -26,7 +24,7 @@ public abstract class SiteMapEntry {
 
 
     /**
-     * A Page of the site
+     * A node of the site map representing a page.
      */
     public static class Page extends SiteMapEntry {
         private Set<SiteMapEntry> children;
@@ -43,7 +41,7 @@ public abstract class SiteMapEntry {
 
 
     /**
-     * A static resource: Image
+     * A node of the site map representing an image
      */
     public static class Image extends SiteMapEntry {
         private Image(String uri) {

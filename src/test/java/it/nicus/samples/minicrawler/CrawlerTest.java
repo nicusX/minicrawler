@@ -4,37 +4,25 @@ import org.junit.Test;
 
 import java.util.Set;
 
-import static org.junit.Assert.*;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertThat;
 
 public class CrawlerTest {
 
     @Test
     public void crawlZeroLevel() {
-        String baseUri = "https://en.wikipedia.org/wiki/Main_Page";
+        String websitePageUri = "https://en.wikipedia.org/wiki/Main_Page";
+        String pageResourcePath = "/wikipedia_page.html";
 
-        SiteMapEntry siteMap = new Crawler(baseUri).crawl(0);
+        DocumentProvider getUriDocumentProvider = new FixedResourceDocumentProvider(pageResourcePath, websitePageUri);
 
-        assertThat(siteMap, instanceOf(SiteMapEntry.Page.class));
-
-        Set<SiteMapEntry> children = ((SiteMapEntry.Page) siteMap).getChildren();
-        assertThat(children, not(empty()));
-    }
-
-    @Test
-    public void crawlOneLevel() {
-        String baseUri = "https://en.wikipedia.org/wiki/Main_Page";
-
-        SiteMapEntry siteMap = new Crawler(baseUri).crawl(1);
+        SiteMapEntry siteMap = new Crawler(websitePageUri, getUriDocumentProvider).crawl(0);
 
         assertThat(siteMap, instanceOf(SiteMapEntry.Page.class));
 
         Set<SiteMapEntry> children = ((SiteMapEntry.Page) siteMap).getChildren();
-        assertThat(children, not(empty()));
-
-        // Some children should have children
-        assertTrue(children.stream()
-                .anyMatch(entry -> entry instanceof SiteMapEntry.Page
-                        && !((SiteMapEntry.Page) entry).getChildren().isEmpty()));
+        assertThat(children, hasSize(570));
     }
+
 }

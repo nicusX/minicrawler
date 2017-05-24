@@ -6,15 +6,15 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Scrape a page at a specified URI, identifying images, internal and external links
+ */
 public class PageScraper {
     private static final Logger LOGGER = LoggerFactory.getLogger(PageScraper.class);
-
 
     private Document doc;
     private String baseHost;
@@ -25,14 +25,22 @@ public class PageScraper {
     }
 
 
-    public static PageScraper fetchPage(final String uri, final String baseUri, final Function<String, Optional<Document>> documentSupplier) {
+    /**
+     * Scrape a page, provided by a documentProvider.
+     *
+     * @param uri              URI of the page
+     * @param baseUri          base URI of the scraped website. Used to identify local pages.
+     * @param documentProvider function providing a Document containing the parsed html page, if any
+     * @return a new instance of PageScraper
+     */
+    public static PageScraper scrape(final String uri, final String baseUri, final DocumentProvider documentProvider) {
         LOGGER.info("Fetching: {}", uri);
 
         String baseHost = URI.create(baseUri).getHost();
 
-        return documentSupplier.apply(uri)
-                .map( document -> new PageScraper(document, baseHost) )
-                .orElse( new EmptyPageScraper() );
+        return documentProvider.get(uri)
+                .map(document -> new PageScraper(document, baseHost))
+                .orElse(new InvalidPageScraper());
     }
 
     private static Set<String> extractElementAttributes(final Document doc, final String cssQuery, final String attrName) {
@@ -43,6 +51,12 @@ public class PageScraper {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Set of images found in the page,
+     * as <code>img</code> tags.
+     *
+     * @return Set of image src URI
+     */
     public Set<String> allImages() {
         return extractElementAttributes(doc, "img[src]", "abs:src");
     }
@@ -50,15 +64,27 @@ public class PageScraper {
     private Stream<String> allLinksStream() {
         return doc.select("a[href]")
                 .stream()
-                .map(element -> element.attr("abs:href"))
+                .map(element -> element.attr("abs:href")) // transforms URI into absolute
                 .filter(href -> !href.isEmpty());
     }
 
+    /**
+     * Set of internal links found in the page,
+     * defined as links with host equal to baseUri host
+     *
+     * @return Set of link URI
+     */
     public Set<String> allInternalLinks() {
         return allLinksStream()
                 .filter(uri -> isInternalLink(uri)).collect(Collectors.toSet());
     }
 
+    /**
+     * Set of external links found in the page,
+     * defined as links with host different from baseUri host
+     *
+     * @return Set of link URI
+     */
     public Set<String> allExternalLinks() {
         return allLinksStream()
                 .filter(uri -> !isInternalLink(uri)).collect(Collectors.toSet());
@@ -75,8 +101,11 @@ public class PageScraper {
         }
     }
 
-    public static class EmptyPageScraper extends PageScraper {
-        private EmptyPageScraper() {
+    /**
+     * Scraper for an invalid page: empty
+     */
+    public static class InvalidPageScraper extends PageScraper {
+        private InvalidPageScraper() {
             super(null, null);
         }
 

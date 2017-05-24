@@ -7,18 +7,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.function.Function;
+
 
 /**
- * GET html content from an URI and parse to JSoup Document.
- *
- * On any error returns an empty.
+ * Implementation of DocumentProvider, GETing the html content from an URI.
+ * Any error returns as empty.
  */
-public class GetUriDocumentParser implements Function<String, Optional<Document>> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(GetUriDocumentParser.class);
+public class GetUriDocumentProvider implements DocumentProvider  {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GetUriDocumentProvider.class);
 
     @Override
-    public Optional<Document> apply(String uri) {
+    public Optional<Document> get(String uri) {
         try {
             LOGGER.trace("Fetching: {}", uri);
             return Optional.of(Jsoup.connect(uri).get());

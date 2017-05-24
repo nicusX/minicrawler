@@ -3,19 +3,11 @@ package it.nicus.samples.minicrawler;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -27,21 +19,12 @@ public class PageScraperTest {
     private static final String BASE_URI = "https://en.wikipedia.org/";
     private static final String BASE_HOST = "en.wikipedia.org";
 
-    // Read a page from a fixed position in classpath, ignoring the provided URI
-    private final Function<String, Optional<Document>> resourcePageParser = (dummy) -> {
-        try {
-            Path path = Paths.get(this.getClass().getResource(PAGE_RESOURCE_PATH).toURI());
-            String content = new String(Files.readAllBytes(path));
-            return Optional.of(Jsoup.parse(content, BASE_URI));
-        } catch (IOException | URISyntaxException ex) {
-            return Optional.empty();
-        }
-    };
+    private final DocumentProvider resourcePageDocumentProvider = new FixedResourceDocumentProvider(PAGE_RESOURCE_PATH, BASE_URI);
 
     @Test
     public void allInternalLinks() {
 
-        PageScraper scraper = PageScraper.fetchPage(PAGE_URI, BASE_URI, resourcePageParser);
+        PageScraper scraper = PageScraper.scrape(PAGE_URI, BASE_URI, resourcePageDocumentProvider);
 
         Set<String> links = scraper.allInternalLinks();
 
@@ -51,7 +34,7 @@ public class PageScraperTest {
 
     @Test
     public void allExternalLinks() {
-        PageScraper scraper = PageScraper.fetchPage(PAGE_URI, BASE_URI, resourcePageParser);
+        PageScraper scraper = PageScraper.scrape(PAGE_URI, BASE_URI, resourcePageDocumentProvider);
 
         Set<String> links = scraper.allExternalLinks();
 
@@ -62,7 +45,7 @@ public class PageScraperTest {
 
     @Test
     public void allImages() {
-        PageScraper scraper = PageScraper.fetchPage(PAGE_URI, BASE_URI, resourcePageParser);
+        PageScraper scraper = PageScraper.scrape(PAGE_URI, BASE_URI, resourcePageDocumentProvider);
 
         Set<String> images = scraper.allImages();
 
@@ -71,9 +54,9 @@ public class PageScraperTest {
 
     @Test
     public void emptyScraperOnInvalidPage() {
-        Function<String, Optional<Document>> invalidPageParser = (dummy) -> Optional.empty();
+        DocumentProvider invalidPageDocumentProvider = (dummy) -> Optional.empty();
 
-        PageScraper scraper = PageScraper.fetchPage("http://foo", "foo", invalidPageParser);
+        PageScraper scraper = PageScraper.scrape("http://foo", "foo", invalidPageDocumentProvider);
 
         assertThat(scraper.allImages(), empty());
         assertThat(scraper.allExternalLinks(), empty());
